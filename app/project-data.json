@@ -1,0 +1,39 @@
+{
+  "projects": [
+    {
+      "name": "Customer insights",
+      "owner": "Data & Research",
+      "status": "On track",
+      "recentActivity": "Interview synthesis is ready for the product team's review.",
+      "priority": "High"
+    },
+    {
+      "name": "Mobile app refresh",
+      "owner": "Product & Design",
+      "status": "In progress",
+      "recentActivity": "The updated onboarding flow is moving into usability testing.",
+      "priority": "Medium"
+    },
+    {
+      "name": "Platform reliability",
+      "owner": "Core Engineering",
+      "status": "At risk",
+      "recentActivity": "The team is preparing a mitigation plan for the queue backlog.",
+      "priority": "High"
+    },
+    {
+      "name": "Design system",
+      "owner": "Experience Team",
+      "status": "Planning",
+      "recentActivity": "The component inventory is complete; scope review is next.",
+      "priority": "Low"
+    },
+    {
+      "name": "Partner launch",
+      "owner": "Go-to-Market",
+      "status": "Complete",
+      "recentActivity": "Launch materials were delivered to the partner team.",
+      "priority": "Medium"
+    }
+  ]
+}

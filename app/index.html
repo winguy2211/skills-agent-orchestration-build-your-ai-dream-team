@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17253c">
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+      const projectGrid = document.querySelector("#project-grid");
+      const loadStatus = document.querySelector("#load-status");
+      const projectCount = document.querySelector("#project-count");
+      const activeCount = document.querySelector("#active-count");
+
+      function normalizeToken(value) {
+        return value
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+      }
+
+      function requireProjectText(project, field, index) {
+        const value = project[field];
+        if (typeof value !== "string" || value.trim() === "") {
+          throw new Error(`Project ${index + 1} is missing a valid "${field}" value.`);
+        }
+        return value.trim();
+      }
+
+      function createProjectCard(project, index) {
+        if (project === null || typeof project !== "object" || Array.isArray(project)) {
+          throw new Error(`Project ${index + 1} must be an object.`);
+        }
+
+        const name = requireProjectText(project, "name", index);
+        const owner = requireProjectText(project, "owner", index);
+        const status = requireProjectText(project, "status", index);
+        const recentActivity = requireProjectText(project, "recentActivity", index);
+        const priority = requireProjectText(project, "priority", index);
+
+        const card = document.createElement("article");
+        card.className = "project-card";
+
+        const topLine = document.createElement("div");
+        topLine.className = "project-card__topline";
+
+        const title = document.createElement("h3");
+        title.className = "project-card__title";
+        title.textContent = name;
+
+        const statusBadge = document.createElement("span");
+        statusBadge.className = "status-badge";
+        statusBadge.dataset.status = normalizeToken(status);
+        statusBadge.textContent = status;
+
+        topLine.append(title, statusBadge);
+
+        const ownerBlock = document.createElement("div");
+        ownerBlock.className = "project-card__owner";
+
+        const ownerLabel = document.createElement("span");
+        ownerLabel.className = "field-label";
+        ownerLabel.textContent = "Project owner";
+
+        const ownerName = document.createElement("p");
+        ownerName.className = "owner-name";
+        ownerName.textContent = owner;
+        ownerBlock.append(ownerLabel, ownerName);
+
+        const activityBlock = document.createElement("div");
+        activityBlock.className = "project-card__activity";
+
+        const activityLabel = document.createElement("h4");
+        activityLabel.className = "field-label";
+        activityLabel.textContent = "Recent activity";
+
+        const activity = document.createElement("p");
+        activity.textContent = recentActivity;
+        activityBlock.append(activityLabel, activity);
+
+        const footer = document.createElement("div");
+        footer.className = "project-card__footer";
+
+        const priorityLabel = document.createElement("span");
+        priorityLabel.className = "field-label";
+        priorityLabel.textContent = "Priority";
+
+        const priorityBadge = document.createElement("span");
+        priorityBadge.className = "priority-badge";
+        priorityBadge.dataset.priority = normalizeToken(priority);
+        priorityBadge.textContent = priority;
+
+        footer.append(priorityLabel, priorityBadge);
+        card.append(topLine, ownerBlock, activityBlock, footer);
+        return card;
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("./project-data.json");
+          if (!response.ok) {
+            throw new Error(`Could not load project data (HTTP ${response.status}).`);
+          }
+
+          const data = await response.json();
+          if (data === null || typeof data !== "object" || !Array.isArray(data.projects)) {
+            throw new Error('Project data must contain a top-level "projects" array.');
+          }
+
+          const cards = data.projects.map(createProjectCard);
+          projectGrid.replaceChildren(...cards);
+          projectCount.textContent = String(cards.length);
+          activeCount.textContent = String(
+            data.projects.filter((project) => {
+              const status = requireProjectText(project, "status", 0);
+              return !["complete", "completed", "done"].includes(normalizeToken(status));
+            }).length
+          );
+          loadStatus.textContent = cards.length === 0
+            ? "No projects are listed yet."
+            : `${cards.length} projects loaded.`;
+        } catch (error) {
+          projectGrid.replaceChildren();
+          projectCount.textContent = "0";
+          activeCount.textContent = "0";
+          loadStatus.textContent = error instanceof Error
+            ? `Dashboard could not load: ${error.message}`
+            : "Dashboard could not load because of an unexpected error.";
+          loadStatus.classList.add("load-status--error");
+        }
+      }
+
+      loadProjects();
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="#main-content" aria-label="Project Pulse home">
+          <span class="brand__mark" aria-hidden="true"><span></span></span>
+          <span>MONA'S TEAM <span class="brand__divider">/</span> PROJECT PULSE</span>
+        </a>
+        <span class="header-note"><span class="header-note__dot"></span> TEAM OVERVIEW</span>
+      </div>
+    </header>
+
+    <main id="main-content" class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div class="intro__copy">
+          <p class="eyebrow">A clearer view of what's moving</p>
+          <h1 id="page-title">Project Pulse</h1>
+          <p class="intro__description">
+            A quick read on the work, people, and priorities shaping Mona's team.
+          </p>
+        </div>
+        <div class="intro__accent" aria-hidden="true">
+          <span class="intro__accent-orbit intro__accent-orbit--one"></span>
+          <span class="intro__accent-orbit intro__accent-orbit--two"></span>
+          <span class="intro__accent-core"></span>
+        </div>
+      </section>
+
+      <section class="overview" aria-label="Project summary">
+        <div class="overview-card">
+          <span class="overview-card__label">Projects tracked</span>
+          <strong id="project-count" class="overview-card__value">—</strong>
+        </div>
+        <div class="overview-card overview-card--active">
+          <span class="overview-card__label">In motion</span>
+          <strong id="active-count" class="overview-card__value">—</strong>
+        </div>
+        <p id="load-status" class="load-status" role="status" aria-live="polite">
+          Loading project data…
+        </p>
+      </section>
+
+      <section class="dashboard" aria-labelledby="projects-heading">
+        <div class="dashboard__heading">
+          <div>
+            <p class="eyebrow">The work at a glance</p>
+            <h2 id="projects-heading">Team projects</h2>
+          </div>
+          <span class="dashboard__caption">STATUS <span aria-hidden="true">·</span> OWNERSHIP <span aria-hidden="true">·</span> MOMENTUM</span>
+        </div>
+        <div id="project-grid" class="project-grid" aria-live="polite"></div>
+      </section>
+
+      <footer class="page-footer">
+        <span class="footer-mark" aria-hidden="true">P</span>
+        <p>One shared view. Better momentum.</p>
+        <span class="page-footer__note">PROJECT PULSE</span>
+      </footer>
+    </main>
+  </body>
+</html>
